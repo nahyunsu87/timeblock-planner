@@ -151,6 +151,7 @@ function onPointerDownGrid(e) {
     type: "create",
     id: activeId,
     anchor: startSlot,
+    moved: false,
   };
 }
 
@@ -190,6 +191,7 @@ function onPointerMove(e) {
 
   if (dragState.type === "create") {
     const currentSlot = pointToSlot(e.clientY);
+    if (currentSlot !== dragState.anchor) dragState.moved = true;
     event.start = clamp(Math.min(dragState.anchor, currentSlot), 0, TOTAL_SLOTS - 1);
     event.end = clamp(Math.max(dragState.anchor + 1, currentSlot), 1, TOTAL_SLOTS);
   }
@@ -215,6 +217,15 @@ function onPointerMove(e) {
 }
 
 function onPointerUp() {
+  if (dragState && dragState.type === "create" && !dragState.moved) {
+    const event = events.find((ev) => ev.id === dragState.id);
+    if (event) {
+      const defaultLength = 6; // 30 minutes in 5-min slots
+      event.end = clamp(event.start + defaultLength, event.start + 1, TOTAL_SLOTS);
+    }
+    setActive(dragState.id);
+    titleInput.focus();
+  }
   dragState = null;
 }
 
